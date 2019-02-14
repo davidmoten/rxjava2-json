@@ -1,5 +1,7 @@
 package com.github.davidmoten.rx2.json;
 
+import static com.github.davidmoten.rx2.json.Util.MAPPER;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -14,7 +16,6 @@ import io.reactivex.Flowable;
 public final class JsonArray {
 
     private Flowable<JsonParser> flowable;
-    private final static ObjectMapper MAPPER = new ObjectMapper();
 
     JsonArray(Flowable<JsonParser> flowable) {
         this.flowable = flowable;

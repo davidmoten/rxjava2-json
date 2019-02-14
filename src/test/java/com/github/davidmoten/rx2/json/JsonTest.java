@@ -3,6 +3,7 @@ package com.github.davidmoten.rx2.json;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import org.junit.Test;
 
@@ -13,6 +14,8 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.reactivex.Flowable;
 
 public class JsonTest {
 
@@ -39,7 +42,7 @@ public class JsonTest {
     @Test
     public void testFlowable() {
         InputStream input = JsonTest.class.getResourceAsStream("/test1.json");
-        Json.parse(input) //
+        Json.stream(input) //
                 .field("menu") //
                 .field("popup") //
                 .fieldArray("menuItem") //
@@ -47,6 +50,18 @@ public class JsonTest {
                 .map(JsonNode::asText) //
                 .test() //
                 .assertValues("New", "Open", "Close") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testFlowableObjectNode() {
+        InputStream input = JsonTest.class.getResourceAsStream("/test1.json");
+        Json.stream(input) //
+                .field("menu") //
+                .objectNode() //
+                .map(on -> on.fieldNames().next())
+                .test() //
+                .assertValues("id") //
                 .assertComplete();
     }
 

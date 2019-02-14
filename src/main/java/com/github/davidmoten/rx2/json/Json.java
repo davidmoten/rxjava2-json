@@ -6,14 +6,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 
 public final class Json {
 
     private final Flowable<JsonParser> flowable;
 
-    public static Json parse(InputStream in) {
+    public static Json stream(InputStream in) {
         return new Json(Flowable.generate(() -> {
             JsonFactory factory = new JsonFactory();
             return factory.createParser(in);
@@ -64,6 +67,14 @@ public final class Json {
 
     public JsonArray fieldArray(String name) {
         return new JsonArray(field(name).flowable);
+    }
+
+    public Maybe<? extends TreeNode> objectNode() {
+        return flowable //
+                .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME) //
+                .map(p -> Util.MAPPER.readTree(p)).filter(x -> x instanceof ObjectNode) //
+                .cast(ObjectNode.class) //
+                .firstElement();
     }
 
 }
