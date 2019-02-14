@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -42,8 +43,8 @@ public class JsonTest {
                 .field("menu") //
                 .field("popup") //
                 .fieldArray("menuItem") //
-                .objectNodes() //
-                .map(node -> node.get("value").asText()) //
+                .field("value") //
+                .map(JsonNode::asText) //
                 .test() //
                 .assertValues("New", "Open", "Close") //
                 .assertComplete();

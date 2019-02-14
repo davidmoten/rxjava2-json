@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -42,5 +43,9 @@ public final class JsonArray {
     public Flowable<ObjectNode> objectNodes() {
         return nodes().filter(node -> node instanceof ObjectNode).cast(ObjectNode.class);
     }
-
+    
+    public Flowable<JsonNode> field(String name) {
+        return objectNodes().map(on -> on.get(name));
+    }
+    
 }
