@@ -32,6 +32,7 @@ public final class Json {
 
     public Json field(String name) {
         return new Json(Flowable.defer(() -> {
+            // TODO use single element array instead of AtomicXXX
             AtomicInteger depth = new AtomicInteger();
             return flowable //
                     .doOnNext(p -> {
@@ -42,14 +43,27 @@ public final class Json {
                             depth.decrementAndGet();
                         }
                     }) //
-                    .filter(p -> p.currentToken() == JsonToken.FIELD_NAME //
+                    .skipWhile(p -> !(p.currentToken() == JsonToken.FIELD_NAME //
                             && p.currentName().equals(name) //
-                            && depth.get() == 1);
+                            && depth.get() == 1)) //
+                    .takeUntil(p -> depth.get() == 0);
         }));
+    }
+
+    public static String indent(int n) {
+        StringBuilder s = new StringBuilder(n);
+        for (int i = 0; i < n; i++) {
+            s.append("  ");
+        }
+        return s.toString();
     }
 
     public Flowable<JsonParser> get() {
         return flowable;
+    }
+
+    public JsonArray fieldArray(String name) {
+        return new JsonArray(field(name).flowable);
     }
 
 }
