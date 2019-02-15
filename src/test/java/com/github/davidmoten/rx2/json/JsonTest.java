@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonTest {
 
@@ -18,7 +17,6 @@ public class JsonTest {
     public void test() throws JsonParseException, IOException {
 
         JsonFactory factory = new JsonFactory();
-        ObjectMapper m = new ObjectMapper();
         JsonParser p = factory
                 .createParser(new BufferedInputStream(input(1), 4));
         while (p.nextToken() != null) {
@@ -45,7 +43,7 @@ public class JsonTest {
         Json.stream(input(1)) //
                 .field("menu") //
                 .objectNode() //
-                .map(on -> on.fieldNames().next()).test() //
+                .map(on -> on.get().fieldNames().next()).test() //
                 .assertValues("id") //
                 .assertComplete();
     }

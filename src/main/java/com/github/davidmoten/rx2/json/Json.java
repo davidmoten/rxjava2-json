@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
 import io.reactivex.Flowable;
@@ -78,11 +77,17 @@ public final class Json {
         return new JsonArray(field(name).flowable);
     }
 
-    public Maybe<ObjectNode> objectNode() {
+    public Maybe<LazyObjectNode> objectNode() {
         return flowable //
                 .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME) //
-                .map(p -> Util.MAPPER.readTree(p)).filter(x -> x instanceof ObjectNode) //
-                .cast(ObjectNode.class) //
+                .flatMapMaybe(p -> {
+                    if (p.currentToken() == JsonToken.START_OBJECT) {
+                        return Maybe.just(p);
+                    } else {
+                        return Maybe.empty();
+                    }
+                })//
+                .map(p -> new LazyObjectNode(p)) //
                 .firstElement();
     }
 
