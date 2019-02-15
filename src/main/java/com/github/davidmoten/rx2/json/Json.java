@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
 
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -69,11 +69,19 @@ public final class Json {
         return new JsonArray(field(name).flowable);
     }
 
-    public Maybe<? extends TreeNode> objectNode() {
+    public Maybe<ObjectNode> objectNode() {
         return flowable //
                 .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME) //
                 .map(p -> Util.MAPPER.readTree(p)).filter(x -> x instanceof ObjectNode) //
                 .cast(ObjectNode.class) //
+                .firstElement();
+    }
+
+    public Maybe<ValueNode> valueNode() {
+        return flowable //
+                .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME) //
+                .map(p -> Util.MAPPER.readTree(p)).filter(x -> x instanceof ValueNode) //
+                .cast(ValueNode.class) //
                 .firstElement();
     }
 

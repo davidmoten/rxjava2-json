@@ -47,7 +47,7 @@ public class JsonTest {
                 .field("popup") //
                 .fieldArray("menuItem") //
                 .field("value") //
-                .map(JsonNode::asText) //
+                .map(JsonNode::asText) //s
                 .test() //
                 .assertValues("New", "Open", "Close") //
                 .assertComplete();
@@ -59,9 +59,20 @@ public class JsonTest {
         Json.stream(input) //
                 .field("menu") //
                 .objectNode() //
-                .map(on -> on.fieldNames().next())
-                .test() //
+                .map(on -> on.fieldNames().next()).test() //
                 .assertValues("id") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testFlowableValueNode() {
+        InputStream input = JsonTest.class.getResourceAsStream("/test1.json");
+        Json.stream(input) //
+                .field("menu") //
+                .field("id") //
+                .valueNode() //
+                .map(n -> n.asText()).test() //
+                .assertValues("file") //
                 .assertComplete();
     }
 
