@@ -3,19 +3,14 @@ package com.github.davidmoten.rx2.json;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import io.reactivex.Flowable;
 
 public class JsonTest {
 
@@ -25,17 +20,9 @@ public class JsonTest {
         JsonFactory factory = new JsonFactory();
         ObjectMapper m = new ObjectMapper();
         JsonParser p = factory
-                .createParser(new BufferedInputStream(JsonTest.class.getResourceAsStream("/test1.json"), 4));
+                .createParser(new BufferedInputStream(input(1), 4));
         while (p.nextToken() != null) {
             System.out.println(p.currentToken() + ": " + p.getCurrentName() + "=" + p.getText());
-            if (false && p.currentToken() == JsonToken.START_ARRAY) {
-                while (p.nextToken() == JsonToken.START_OBJECT) {
-                    // read everything from this START_OBJECT to the matching END_OBJECT
-                    // and return it as a tree model ObjectNode
-                    ObjectNode node = m.readTree(p);
-                    System.out.println(node.get("value"));
-                }
-            }
         }
     }
 
@@ -47,7 +34,7 @@ public class JsonTest {
                 .field("popup") //
                 .fieldArray("menuItem") //
                 .field("value") //
-                .map(JsonNode::asText) //s
+                .map(JsonNode::asText) // s
                 .test() //
                 .assertValues("New", "Open", "Close") //
                 .assertComplete();
@@ -55,8 +42,7 @@ public class JsonTest {
 
     @Test
     public void testFlowableObjectNode() {
-        InputStream input = JsonTest.class.getResourceAsStream("/test1.json");
-        Json.stream(input) //
+        Json.stream(input(1)) //
                 .field("menu") //
                 .objectNode() //
                 .map(on -> on.fieldNames().next()).test() //
@@ -66,14 +52,27 @@ public class JsonTest {
 
     @Test
     public void testFlowableValueNode() {
-        InputStream input = JsonTest.class.getResourceAsStream("/test1.json");
-        Json.stream(input) //
+        Json.stream(input(1)) //
                 .field("menu") //
                 .field("id") //
                 .valueNode() //
                 .map(n -> n.asText()).test() //
                 .assertValues("file") //
                 .assertComplete();
+    }
+
+    @Test
+    public void testFlowableNestedArrays() {
+        Json.stream(input(1)) //
+                .fieldArray("menu") //
+                .field("id") //
+                .map(n -> n.asText()).test() //
+                .assertValues("file") //
+                .assertComplete();
+    }
+
+    private static InputStream input(int i) {
+        return JsonTest.class.getResourceAsStream("/test" + i + ".json");
     }
 
 }
