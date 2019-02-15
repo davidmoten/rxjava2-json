@@ -11,7 +11,7 @@
         <version>0.1</version>
     </parent>
     <artifactId>rxjava2-json</artifactId>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>Streaming library for json</description>
     <packaging>jar</packaging>
