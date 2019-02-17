@@ -54,7 +54,7 @@ public class JsonTest {
                 .field("menu") //
                 .field("id") //
                 .valueNode() //
-                .map(n -> n.asText()).test() //
+                .map(n -> n.get().asText()).test() //
                 .assertValues("file") //
                 .assertComplete();
     }

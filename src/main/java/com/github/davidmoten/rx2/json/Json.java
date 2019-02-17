@@ -7,10 +7,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.node.ValueNode;
 
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import io.reactivex.functions.Predicate;
 
 public final class Json {
 
@@ -78,24 +78,36 @@ public final class Json {
     }
 
     public Maybe<LazyObjectNode> objectNode() {
+        return node_(t -> t == JsonToken.START_OBJECT) //
+                .map(p -> new LazyObjectNode(p));
+    }
+
+    public Maybe<LazyValueNode> valueNode() {
+        // TODO make test more efficient?
+        return node_(t -> t.name().startsWith("VALUE")) //
+                .map(p -> new LazyValueNode(p));
+    }
+
+    public Maybe<LazyTreeNode> node() {
+        return node_(t -> true) //
+                .map(p -> new LazyTreeNode(p));
+    }
+
+    public Maybe<LazyArrayNode> arrayNode() {
+        return node_(t -> t == JsonToken.START_ARRAY) //
+                .map(p -> new LazyArrayNode(p));
+    }
+
+    private Maybe<JsonParser> node_(Predicate<JsonToken> predicate) {
         return flowable //
                 .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME) //
                 .flatMapMaybe(p -> {
-                    if (p.currentToken() == JsonToken.START_OBJECT) {
+                    if (predicate.test(p.currentToken())) {
                         return Maybe.just(p);
                     } else {
                         return Maybe.empty();
                     }
                 })//
-                .map(p -> new LazyObjectNode(p)) //
-                .firstElement();
-    }
-
-    public Maybe<ValueNode> valueNode() {
-        return flowable //
-                .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME) //
-                .map(p -> Util.MAPPER.readTree(p)).filter(x -> x instanceof ValueNode) //
-                .cast(ValueNode.class) //
                 .firstElement();
     }
 

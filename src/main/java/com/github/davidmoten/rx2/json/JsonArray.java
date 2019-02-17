@@ -6,22 +6,39 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.reactivex.Flowable;
 
 public final class JsonArray {
 
-    private Flowable<JsonParser> flowable;
+    private final Flowable<JsonParser> flowable;
 
     JsonArray(Flowable<JsonParser> flowable) {
         this.flowable = flowable;
     }
 
-    public <T> Flowable<TreeNode> nodes() {
+    public <T> Flowable<LazyTreeNode> nodes() {
+        return nodes_().map(p -> MAPPER.readTree(p));
+    }
+
+    public Flowable<LazyObjectNode> objectNodes() {
+        return nodes_().map(p -> new LazyObjectNode(p));
+    }
+
+    public Flowable<LazyValueNode> valueNodes() {
+        return nodes_().map(p -> new LazyValueNode(p));
+    }
+
+    public Flowable<LazyArrayNode> arrayNodes() {
+        return nodes_().map(p -> new LazyArrayNode(p));
+    }
+
+    public Flowable<JsonNode> field(String name) {
+        return objectNodes().map(on -> on.get().get(name));
+    }
+
+    private Flowable<JsonParser> nodes_() {
         return Flowable.defer(() -> {
             // TODO use single element array instead of AtomicXXX
             AtomicInteger depth = new AtomicInteger();
@@ -34,19 +51,12 @@ public final class JsonArray {
                             depth.decrementAndGet();
                         }
                     }) //
-                    .skipWhile(
-                            p -> p.currentToken() == JsonToken.FIELD_NAME || p.currentToken() == JsonToken.START_ARRAY) //
+                    .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME
+                            || p.currentToken() == JsonToken.START_ARRAY) //
                     .takeUntil(p -> depth.get() == 0) //
-                    .filter(p -> p.currentToken() != JsonToken.END_ARRAY && p.currentToken() != JsonToken.END_OBJECT); //
-        }).map(p -> MAPPER.readTree(p));
+                    .filter(p -> p.currentToken() != JsonToken.END_ARRAY
+                            && p.currentToken() != JsonToken.END_OBJECT); //
+        });
     }
 
-    public Flowable<ObjectNode> objectNodes() {
-        return nodes().filter(node -> node instanceof ObjectNode).cast(ObjectNode.class);
-    }
-    
-    public Flowable<JsonNode> field(String name) {
-        return objectNodes().map(on -> on.get(name));
-    }
-    
 }
