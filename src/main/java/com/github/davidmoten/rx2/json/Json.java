@@ -10,24 +10,34 @@ import com.fasterxml.jackson.core.JsonToken;
 
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 
 public final class Json {
 
+    private static final JsonFactory FACTORY = new JsonFactory();
+
     private final Flowable<JsonParser> flowable;
 
     public static Json stream(Callable<InputStream> in) {
-        return new Json(Flowable.using(in, is -> flowable(is), is -> is.close(), true));
+        return new Json(Flowable.using(in, //
+                is -> flowable(factory -> factory.createParser(is)), //
+                is -> is.close(), //
+                true));
     }
 
     public static Json stream(InputStream in) {
-        return new Json(flowable(in));
+        return new Json(flowable(factory -> factory.createParser(in)));
     }
 
-    private static Flowable<JsonParser> flowable(InputStream in) {
+    public static Json stream(Function<? super JsonFactory, ? extends JsonParser> creator) {
+        return new Json(flowable(creator));
+    }
+
+    private static Flowable<JsonParser> flowable(
+            Function<? super JsonFactory, ? extends JsonParser> creator) {
         return Flowable.generate(() -> {
-            JsonFactory factory = new JsonFactory();
-            return factory.createParser(in);
+            return creator.apply(FACTORY);
         }, (p, emitter) -> {
             if (p.nextToken() != null) {
                 emitter.onNext(p);
