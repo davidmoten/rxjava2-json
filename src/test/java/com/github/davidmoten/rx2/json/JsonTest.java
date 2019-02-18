@@ -15,10 +15,8 @@ public class JsonTest {
 
     @Test
     public void test() throws JsonParseException, IOException {
-
         JsonFactory factory = new JsonFactory();
-        JsonParser p = factory
-                .createParser(new BufferedInputStream(input(1), 4));
+        JsonParser p = factory.createParser(new BufferedInputStream(input(1), 4));
         while (p.nextToken() != null) {
             System.out.println(p.currentToken() + ": " + p.getCurrentName() + "=" + p.getText());
         }
@@ -67,6 +65,20 @@ public class JsonTest {
                 .map(n -> n.asText()).test() //
                 .assertValues("file") //
                 .assertComplete();
+    }
+
+    @Test
+    public void testBookStream() {
+        Json.stream(input(3)) //
+                .fieldArray("books") //
+                .field("author") //
+                .map(node -> node.asText()) //
+                .distinct() //
+                .count() //
+                .test() //
+                .assertValue(8L) //
+                .assertComplete();
+
     }
 
     private static InputStream input(int i) {
