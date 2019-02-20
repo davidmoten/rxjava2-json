@@ -9,7 +9,7 @@ Project goals are these:
 * present queries on streams of JSON text as an RxJava stream (`Flowable`, `Maybe`, `Single`)
 * reduce memory, cpu and io use by only parsing JSON parts that are queried  
 * support backpressure 
-* make a certain class of JSON query easily expressable in RxJava 2.x
+* make a certain class of JSON query efficient and easily expressable in RxJava 2.x
 
 ## Examples
 
