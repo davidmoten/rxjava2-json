@@ -44,6 +44,6 @@ long count =
     .map(node -> node.asText()) //
     .distinct() //
     .count() //
-    .blockingGet();;      .
+    .blockingGet();      .
 ```
 
