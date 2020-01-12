@@ -1,12 +1,12 @@
 package com.github.davidmoten.rx2.json;
 
 import java.io.InputStream;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.io.Reader;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -15,30 +15,43 @@ import io.reactivex.functions.Predicate;
 
 public final class Json {
 
-    private static final JsonFactory FACTORY = new JsonFactory();
+    private static final JsonFactory FACTORY = new JsonFactory().configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
 
-    private final Flowable<JsonParser> flowable;
+    private final Flowable<JsonParser> stream;
+    private ObjectMapper mapper = new ObjectMapper();
 
-    public static Json stream(Callable<InputStream> in) {
-        return new Json(Flowable.using(in, //
-                is -> flowable(factory -> factory.createParser(is)), //
-                is -> is.close(), //
-                true));
-    }
+    // Note that it's a bad idea to provide a stream(Callable<InputStream>) method
+    // that takes because the responsibility for closing the InputStream would rest
+    // with this library. The fact that a stateful JsonParser is emitted by methods
+    // on this stream means that the InputStream could be closed before the parser
+    // has read stuff (depending on what operators are applied to the stream). For
+    // this reason InputStream closure is best handled by the client than by this
+    // library.
 
     public static Json stream(InputStream in) {
-        return new Json(flowable(factory -> factory.createParser(in)));
+        return new Json(streamFrom(factory -> factory.createParser(in)));
+    }
+
+    public static Json stream(Reader reader) {
+        return new Json(streamFrom(factory -> factory.createParser(reader)));
+    }
+
+    public static Json stream(String text) {
+        return new Json(streamFrom(factory -> factory.createParser(text)));
     }
 
     public static Json stream(Function<? super JsonFactory, ? extends JsonParser> creator) {
-        return new Json(flowable(creator));
+        return new Json(streamFrom(creator));
     }
 
-    private static Flowable<JsonParser> flowable(
-            Function<? super JsonFactory, ? extends JsonParser> creator) {
-        return Flowable.generate(() -> {
-            return creator.apply(FACTORY);
-        }, (p, emitter) -> {
+    public Json withMapper(ObjectMapper mapper) {
+        this.mapper = mapper;
+        return this;
+    }
+
+    private static Flowable<JsonParser> streamFrom(Function<? super JsonFactory, ? extends JsonParser> creator) {
+        return Flowable.generate(() -> creator.apply(FACTORY), //
+                (p, emitter) -> {
             if (p.nextToken() != null) {
                 emitter.onNext(p);
             } else {
@@ -48,26 +61,25 @@ public final class Json {
     }
 
     private Json(Flowable<JsonParser> flowable) {
-        this.flowable = flowable;
+        this.stream = flowable;
     }
 
     public Json field(String name) {
         return new Json(Flowable.defer(() -> {
-            // TODO use single element array instead of AtomicXXX
-            AtomicInteger depth = new AtomicInteger();
-            return flowable //
+            int[] depth = new int[1];
+            return stream //
                     .doOnNext(p -> {
                         JsonToken t = p.currentToken();
                         if (t == JsonToken.START_OBJECT || t == JsonToken.START_ARRAY) {
-                            depth.incrementAndGet();
+                            depth[0]++;
                         } else if (t == JsonToken.END_OBJECT || t == JsonToken.END_ARRAY) {
-                            depth.decrementAndGet();
+                            depth[0]--;
                         }
                     }) //
                     .skipWhile(p -> !(p.currentToken() == JsonToken.FIELD_NAME //
                             && p.currentName().equals(name) //
-                            && depth.get() == 1)) //
-                    .takeUntil(p -> depth.get() == 0);
+                            && depth[0] == 1)) //
+                    .takeUntil(p -> depth[0] == 0);
         }));
     }
 
@@ -80,11 +92,11 @@ public final class Json {
     }
 
     public Flowable<JsonParser> get() {
-        return flowable;
+        return stream;
     }
 
     public JsonArray fieldArray(String name) {
-        return new JsonArray(field(name).flowable);
+        return new JsonArray(field(name).stream, mapper);
     }
 
     public Maybe<LazyObjectNode> objectNode() {
@@ -105,19 +117,13 @@ public final class Json {
 
     public Maybe<LazyArrayNode> arrayNode() {
         return node_(t -> t == JsonToken.START_ARRAY) //
-                .map(p -> new LazyArrayNode(p));
+                .map(p -> new LazyArrayNode(p, mapper));
     }
 
     private Maybe<JsonParser> node_(Predicate<JsonToken> predicate) {
-        return flowable //
+        return stream //
                 .skipWhile(p -> p.currentToken() == JsonToken.FIELD_NAME) //
-                .flatMapMaybe(p -> {
-                    if (predicate.test(p.currentToken())) {
-                        return Maybe.just(p);
-                    } else {
-                        return Maybe.empty();
-                    }
-                })//
+                .filter(p -> predicate.test(p.currentToken())) //
                 .firstElement();
     }
 
