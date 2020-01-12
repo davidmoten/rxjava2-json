@@ -3,7 +3,6 @@ package com.github.davidmoten.rx2.json;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
