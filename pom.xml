@@ -28,7 +28,6 @@
         <jackson.version>2.11.0</jackson.version>
 
         <checkstyle.version>3.0.0</checkstyle.version>
-        <findbugs.version>2.5.4</findbugs.version>
         <javadoc.version>3.0.1</javadoc.version>
         <pmd.version>3.10.0</pmd.version>
         <jdepend.version>2.0</jdepend.version>
@@ -228,9 +227,6 @@
                     <aggregate>true</aggregate>
                 </configuration>
             </plugin>
-            <!-- <plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>findbugs-maven-plugin</artifactId> 
-                <version>${findbugs.version}</version> <configuration> <xmlOutput>true</xmlOutput> 
-                <effort>Max</effort> </configuration> </plugin> -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>jdepend-maven-plugin</artifactId>
