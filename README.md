@@ -1,4 +1,7 @@
 # rxjava2-json
+<a href="https://github.com/davidmoten/rxjava2-json/actions/workflows/ci.yml"><img src="https://github.com/davidmoten/rxjava2-json/actions/workflows/ci.yml/badge.svg"/></a><br/>
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-json/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-json)<br/>
+[![codecov](https://codecov.io/gh/davidmoten/rxjava2-json/branch/master/graph/badge.svg)](https://codecov.io/gh/davidmoten/rxjava2-json)<br/>
 RxJava 2 utilities for JSON.
 
 Status: *in development*
