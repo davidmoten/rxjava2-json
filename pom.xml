@@ -28,7 +28,7 @@
         <jackson.version>2.20.0</jackson.version>
 
         <checkstyle.version>3.6.0</checkstyle.version>
-        <javadoc.version>3.11.3</javadoc.version>
+        <javadoc.version>3.12.0</javadoc.version>
         <pmd.version>3.27.0</pmd.version>
         <jdepend.version>2.1</jdepend.version>
         <javancss.version>2.1</javancss.version>
